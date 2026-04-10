@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      Mobile-optimized viewport. We disable user scaling for the AR view.
+      The AR camera fill needs consistent sizing.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+    <title>AR FitCoach — Augmented Reality Fitness Assistant</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏋️</text></svg>" />
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!--
+      ═══════════════════════════════════════════════════════════════════
+      THREE.JS — 3D rendering engine
+      We load Three.js r128 which is fully compatible with AR.js 3.x
+      ═══════════════════════════════════════════════════════════════════
+    -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!--
+      ═══════════════════════════════════════════════════════════════════
+      AR.JS — Augmented Reality marker tracking library
+      Provides:
+        - THREEx.ArToolkitSource  (camera / video access)
+        - THREEx.ArToolkitContext (marker detection engine)
+        - THREEx.ArMarkerControls (attaches 3D objects to markers)
+
+      The "mindar-image" variant is NOT used here; we use the classic
+      AR.js with Hiro pattern detection which works without any
+      additional setup or training data.
+      ═══════════════════════════════════════════════════════════════════
+    -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threejs-minified.js"></script>
+
+    <style>
+      /* Prevent overscroll bounce on iOS which would break AR view */
+      html, body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      /* Hide the AR.js injected video element — the canvas renders on top */
+      #ar-canvas-container video,
+      body > video {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        z-index: -1 !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      React mounts here. The AR canvas and overlay are injected by React
+      components. AR.js also injects its own <video> element directly
+      into <body> which is styled to be a background layer above.
+    -->
+    <div id="root"></div>
+
+    <!-- React + Vite entry point -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

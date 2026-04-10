@@ -16,6 +16,22 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Artifacts
+
+### AR FitCoach (`artifacts/ar-fitness`)
+- **URL**: `/` (root)
+- **Type**: React + Vite web app (frontend only, no backend)
+- **Purpose**: WebAR fitness assistant with Three.js 3D rendering + AR.js camera tracking
+- **AR library**: AR.js + Three.js loaded via CDN script tags in `index.html`
+- **Key files**:
+  - `src/lib/fitness.ts` — exercise library, pose keyframes, plan builder
+  - `src/lib/arRenderer.ts` — Three.js AR scene, stick figure, guide line overlays
+  - `src/pages/OnboardingScreen.tsx` — 4-step onboarding (age, goal, level, plan)
+  - `src/pages/WorkoutScreen.tsx` — AR view with rep counter, posture HUD, controls
+  - `src/components/MarkerGuideModal.tsx` — Hiro marker instructions modal
+- **AR marker**: Uses the Hiro pattern (classic AR.js marker) — must print to anchor 3D figure
+- **Demo mode**: Falls back to rotating figure on dark background if camera unavailable
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
