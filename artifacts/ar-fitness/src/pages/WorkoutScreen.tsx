@@ -15,12 +15,14 @@ import type { ExercisePlan, ExerciseId } from "@/lib/fitness";
 import { ARRenderer } from "@/lib/arRenderer";
 import { MarkerGuideModal } from "@/components/MarkerGuideModal";
 
+
 interface WorkoutScreenProps {
   plan: ExercisePlan;
   onBack: () => void;
+  onCompleteWorkout: () => void;
 }
 
-export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
+export function WorkoutScreen({ plan, onBack, onCompleteWorkout }: WorkoutScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<ARRenderer | null>(null);
   const repTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -35,6 +37,7 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
   const [previewing, setPreviewing] = useState(true);
   const [streak, setStreak] = useState(0);
   const [showRepAnim, setShowRepAnim] = useState(false);
+  const [restTimeLeft, setRestTimeLeft] = useState<number | null>(null);
 
   const currentExercise = plan.exercises[exerciseIndex];
   const targetReps = currentExercise.targetReps;
@@ -136,6 +139,13 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
     };
   }, [isRunning, done, targetReps]);
 
+  // ── Rest Timer Logic ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (done && restTimeLeft === null) {
+      setRestTimeLeft(30); // Start 30s rest when target reps are hit
+    }
+  }, [done, restTimeLeft]);
+
   // ── Handlers ──────────────────────────────────────────────────────────
 
   const handleStartStop = useCallback(() => {
@@ -157,6 +167,31 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
     setIsRunning(false);
     rendererRef.current?.resetReps();
   }, [exerciseIndex, plan.exercises.length]);
+
+  // ── Rest Timer Logic ──────────────────────────────────────────────────
+  useEffect(() => {
+    if (done && restTimeLeft === null) {
+      setRestTimeLeft(30); // Start 30s rest when target reps are hit
+    }
+  }, [done, restTimeLeft]);
+
+  useEffect(() => {
+    if (restTimeLeft === null) return;
+
+    if (restTimeLeft > 0) {
+      const timer = window.setTimeout(() => setRestTimeLeft((r) => (r ?? 0) - 1), 1000);
+      return () => window.clearTimeout(timer);
+    }
+
+    setRestTimeLeft(null);
+    const isLast = exerciseIndex === plan.exercises.length - 1;
+    if (isLast) {
+      onCompleteWorkout(); // Finish the whole workout!
+    } else {
+      handleSwitch(); // Move to next exercise automatically
+    }
+    return;
+  }, [restTimeLeft, exerciseIndex, plan.exercises.length, handleSwitch, onCompleteWorkout]);
 
   // ── Posture quality label ──────────────────────────────────────────────
   const postureLabel = postureOk ? "Good form" : "Adjust form";
@@ -331,13 +366,16 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
             {currentExercise.postureGuide.tip}
           </div>
 
-          {/* Done state */}
+          {/* Done state & Timer */}
           {done && (
-            <div className="glass-panel p-3 mb-3 text-center">
-              <p className="text-primary font-bold text-base">Set complete!</p>
-              <p className="text-muted-foreground text-xs mt-1">
-                You completed {targetReps} reps. Rest 30–60 seconds, then continue.
-              </p>
+            <div className="glass-panel p-4 mb-3 text-center" style={{ background: "rgba(34, 197, 94, 0.15)", border: "1px solid #22c55e" }}>
+              <p className="text-green-400 font-bold text-lg">Set complete!</p>
+              {restTimeLeft !== null && (
+                <div style={{ marginTop: "10px" }}>
+                  <p style={{ fontSize: "2.5rem", fontWeight: 900, color: "#fff", lineHeight: 1 }}>{restTimeLeft}s</p>
+                  <p className="text-green-300 text-xs mt-1 font-medium">Resting... Next exercise starting automatically.</p>
+                </div>
+              )}
             </div>
           )}
 

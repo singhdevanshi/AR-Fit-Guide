@@ -15,6 +15,7 @@ import { getExercisesForDay, isWorkoutDay } from "@/lib/fitness";
 interface DashboardScreenProps {
   profile: UserProfile;
   plan: ExercisePlan;
+  completedToday?: boolean;
   onStartWorkout: () => void;
   onBack: () => void;
 }
@@ -37,7 +38,7 @@ const MONTH_NAMES = [
   "July","August","September","October","November","December",
 ];
 
-export function DashboardScreen({ profile, plan, onStartWorkout, onBack }: DashboardScreenProps) {
+export function DashboardScreen({ profile, plan, completedToday, onStartWorkout, onBack }: DashboardScreenProps) {
   const today = new Date();
   const year  = today.getFullYear();
   const month = today.getMonth();
@@ -389,6 +390,7 @@ export function DashboardScreen({ profile, plan, onStartWorkout, onBack }: Dashb
               }
 
               const isPast = cell.day < today.getDate() && !cell.isToday;
+              const isCompletedToday = cell.isToday && completedToday;
 
               return (
                 <div
@@ -440,14 +442,10 @@ export function DashboardScreen({ profile, plan, onStartWorkout, onBack }: Dashb
                       marginTop: 3,
                     }} />
                   )}
-                  {/* Past workout checkmark */}
-                  {cell.isWorkout && isPast && (
+{/* Past workout checkmark */}
+                  {cell.isWorkout && (isPast || isCompletedToday) && (
                     <div style={{
-                      position: "absolute",
-                      top: 2,
-                      right: 3,
-                      fontSize: 7,
-                      color: "#4ade8099",
+                      position: "absolute", top: 2, right: 3, fontSize: 10, color: "#4ade80", fontWeight: "bold"
                     }}>✓</div>
                   )}
                 </div>

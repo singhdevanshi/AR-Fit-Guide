@@ -1,64 +1,66 @@
-/*
- * App.tsx — Root component and routing for the WebAR Fitness Assistant
- *
- * The app has three main phases:
- *   1. Onboarding  — collect user info and show exercise recommendations
- *   2. Dashboard   — profile overview, monthly calendar, today's workout
- *   3. AR Workout  — launch the camera, overlay the 3D skeleton, guide reps
- */
 import { useState } from "react";
-import { OnboardingScreen } from "@/pages/OnboardingScreen";
-import { DashboardScreen }  from "@/pages/DashboardScreen";
-import { WorkoutScreen }    from "@/pages/WorkoutScreen";
-import type { UserProfile, ExercisePlan } from "@/lib/fitness";
+import type { UserProfile } from "@/lib/fitness";
 import { buildExercisePlan } from "@/lib/fitness";
+import { DashboardScreen } from "@/pages/DashboardScreen";
+import { WorkoutScreen } from "@/pages/WorkoutScreen";
+import { OnboardingScreen } from "@/pages/OnboardingScreen";
+import { CelebrationScreen } from "@/pages/CelebrationScreen";
 
-type AppPhase = "onboarding" | "dashboard" | "workout";
+export default function App() {
+  // Safe state persistence: Load from local storage if it exists!
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem("ar-fit-profile");
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  // Manage which screen is active
+  const [view, setView] = useState<"onboarding" | "dashboard" | "workout" | "celebration">(
+    profile ? "dashboard" : "onboarding"
+  );
+  const [completedToday, setCompletedToday] = useState(false);
 
-function App() {
-  const [phase,   setPhase]   = useState<AppPhase>("onboarding");
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [plan,    setPlan]    = useState<ExercisePlan | null>(null);
+  const handleProfileComplete = (p: UserProfile) => {
+    setProfile(p);
+    localStorage.setItem("ar-fit-profile", JSON.stringify(p));
+    setView("dashboard");
+  };
 
-  function handleOnboardingComplete(userProfile: UserProfile) {
-    const exercisePlan = buildExercisePlan(userProfile);
-    setProfile(userProfile);
-    setPlan(exercisePlan);
-    setPhase("dashboard");
+  const plan = profile ? buildExercisePlan(profile) : null;
+
+  if (!profile || view === "onboarding") {
+    return <OnboardingScreen onComplete={handleProfileComplete} />;
   }
 
-  function handleStartWorkout() {
-    setPhase("workout");
+  if (view === "workout" && plan) {
+    return (
+      <WorkoutScreen
+        plan={plan}
+        onBack={() => setView("dashboard")} // Safely return to dashboard!
+        onCompleteWorkout={() => {
+          setCompletedToday(true);
+          setView("celebration");
+        }}
+      />
+    );
   }
 
-  function handleBackToDashboard() {
-    setPhase("dashboard");
-  }
-
-  function handleBackToOnboarding() {
-    setPhase("onboarding");
-    setProfile(null);
-    setPlan(null);
+  if (view === "celebration") {
+    return <CelebrationScreen onFinish={() => setView("dashboard")} />;
   }
 
   return (
-    <>
-      {phase === "onboarding" && (
-        <OnboardingScreen onComplete={handleOnboardingComplete} />
-      )}
-      {phase === "dashboard" && profile && plan && (
-        <DashboardScreen
-          profile={profile}
-          plan={plan}
-          onStartWorkout={handleStartWorkout}
-          onBack={handleBackToOnboarding}
-        />
-      )}
-      {phase === "workout" && plan && (
-        <WorkoutScreen plan={plan} onBack={handleBackToDashboard} />
-      )}
-    </>
+    <DashboardScreen
+      profile={profile}
+      plan={plan!}
+      completedToday={completedToday}
+      onStartWorkout={() => setView("workout")}
+      onBack={() => {
+        // Allow user to completely reset the app by hitting back on the dashboard
+        localStorage.removeItem("ar-fit-profile");
+        setProfile(null);
+        setView("onboarding");
+        setCompletedToday(false);
+      }}
+    />
   );
 }
-
-export default App;
