@@ -24,8 +24,6 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<ARRenderer | null>(null);
   const repTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevRepCycleT = useRef(0);
-
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [reps, setReps] = useState(0);
@@ -33,57 +31,54 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
   const [postureOk, setPostureOk] = useState(true);
   const [showMarkerGuide, setShowMarkerGuide] = useState(false);
   const [arStatus, setArStatus] = useState<"loading" | "ready" | "demo">("loading");
+  const [retryKey, setRetryKey] = useState(0);
+  const [previewing, setPreviewing] = useState(true);
 
   const currentExercise = plan.exercises[exerciseIndex];
   const targetReps = currentExercise.targetReps;
   const done = reps >= targetReps;
 
+  const isSecureHost =
+    typeof window !== "undefined" &&
+    (window.isSecureContext ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1");
+
   // ── Initialize ARRenderer once the canvas mounts ──────────────────────
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Check if Three.js is loaded via the CDN global
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!(window as any).THREE) {
-      const t = setTimeout(() => {
-        if (!canvasRef.current) return;
-        try {
-          rendererRef.current = new ARRenderer(canvasRef.current);
-          // Poll for actual mode after AR init resolves (async camera permission)
-          scheduleStatusCheck();
-        } catch {
-          setArStatus("demo");
-        }
-      }, 600);
-      return () => clearTimeout(t);
-    }
+    setArStatus("loading");
+    rendererRef.current?.destroy();
+    rendererRef.current = null;
 
-    try {
-      rendererRef.current = new ARRenderer(canvasRef.current);
-      // AR.js init is asynchronous — poll to determine if camera opened or fell back to demo
-      scheduleStatusCheck();
-    } catch (err) {
-      console.warn("AR init failed:", err);
+    const renderer = new ARRenderer(canvasRef.current, currentExercise.id as ExerciseId, currentExercise.repDurationMs);
+    rendererRef.current = renderer;
+
+    let active = true;
+    renderer.waitForReady().then((mode) => {
+      if (!active) return;
+      setArStatus(mode === "demo" ? "demo" : "ready");
+    }).catch((err) => {
+      if (!active) return;
+      console.warn("AR renderer startup failed:", err);
       setArStatus("demo");
-    }
+    });
 
     return () => {
-      rendererRef.current?.destroy();
+      active = false;
+      renderer.destroy();
       rendererRef.current = null;
     };
+  }, [retryKey]);
 
-    function scheduleStatusCheck() {
-      // Give AR.js up to 3 seconds to open the camera before reporting status
-      const t = setTimeout(() => {
-        const renderer = rendererRef.current;
-        if (!renderer) return;
-        setArStatus(renderer.isDemoMode() ? "demo" : "ready");
-      }, 3000);
-      // Also set "loading" in the meantime
-      setArStatus("loading");
-      return t;
-    }
-  }, []);
+  useEffect(() => {
+    setPreviewing(true);
+    setIsRunning(false);
+    setReps(0);
+    const timer = window.setTimeout(() => setPreviewing(false), 2200);
+    return () => window.clearTimeout(timer);
+  }, [currentExercise.id, retryKey]);
 
   // ── Sync exercise to renderer when it changes ──────────────────────────
   useEffect(() => {
@@ -93,8 +88,11 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
     );
   }, [currentExercise]);
 
-  // ── Simulated rep counter ──────────────────────────────────────────────
-  // We poll the renderer's animation cycle progress to detect completed reps.
+  useEffect(() => {
+    rendererRef.current?.setRunning(isRunning);
+  }, [isRunning]);
+
+  // ── Live pose tracker polling ─────────────────────────────────────────
   useEffect(() => {
     if (!isRunning || done) {
       if (repTimerRef.current) clearInterval(repTimerRef.current);
@@ -105,21 +103,11 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
       const renderer = rendererRef.current;
       if (!renderer) return;
 
-      const t = renderer.getRepCycleT();
-
-      // Detect a completed rep: when the cycle wraps around from >0.9 to <0.1
-      if (prevRepCycleT.current > 0.9 && t < 0.1) {
-        setReps((r) => Math.min(r + 1, targetReps));
-      }
-      prevRepCycleT.current = t;
-
-      // Update posture readout from the current animation state
-      const frameData = window.__ARFitnessFrameData;
-      if (frameData) {
-        setCurrentAngle(frameData.angleValue);
-        setPostureOk(frameData.postureOk);
-      }
-    }, 80); // ~12fps poll
+      const currentReps = renderer.getRepCount();
+      setReps(Math.min(currentReps, targetReps));
+      setCurrentAngle(renderer.getCurrentAngle());
+      setPostureOk(renderer.getCurrentPostureOk());
+    }, 80);
 
     return () => {
       if (repTimerRef.current) clearInterval(repTimerRef.current);
@@ -129,21 +117,23 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
   // ── Handlers ──────────────────────────────────────────────────────────
 
   const handleStartStop = useCallback(() => {
+    if (previewing) return;
     if (done) {
       // Reset for next set
       setReps(0);
+      rendererRef.current?.resetReps();
       setIsRunning(true);
       return;
     }
     setIsRunning((r) => !r);
-  }, [done]);
+  }, [done, previewing]);
 
   const handleSwitch = useCallback(() => {
     const next = (exerciseIndex + 1) % plan.exercises.length;
     setExerciseIndex(next);
     setReps(0);
     setIsRunning(false);
-    prevRepCycleT.current = 0;
+    rendererRef.current?.resetReps();
   }, [exerciseIndex, plan.exercises.length]);
 
   // ── Posture quality label ──────────────────────────────────────────────
@@ -174,7 +164,7 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
           width: "100%",
           height: "100%",
           zIndex: 1,
-          background: arStatus === "demo" ? "#0a0f1a" : "transparent",
+          background: "transparent",
         }}
       />
 
@@ -194,7 +184,32 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
           background: "rgba(142,100,0,0.55)", textAlign: "center", padding: "0.4rem",
           fontSize: "0.75rem", color: "#ffe",
         }}>
-          Demo mode — camera unavailable or permission denied. Showing animated figure.
+          <div>
+            Demo mode — camera unavailable or permission denied. Showing animated figure.
+          </div>
+          <div style={{ marginTop: "0.25rem", color: "#ffecb3" }}>
+            The live camera feed appears behind the guide. This app currently simulates rep counting and posture using a preset exercise animation, not live body tracking.
+          </div>
+          {!isSecureHost && (
+            <div style={{ marginTop: "0.25rem", color: "#ffecb3" }}>
+              Camera access requires a secure origin. Use localhost or HTTPS to enable the webcam.
+            </div>
+          )}
+          <button
+            onClick={() => setRetryKey((key) => key + 1)}
+            style={{
+              marginTop: "0.35rem",
+              border: "1px solid rgba(255,255,255,0.8)",
+              borderRadius: "0.6rem",
+              padding: "0.35rem 0.8rem",
+              color: "#fff",
+              background: "rgba(0,0,0,0.2)",
+              cursor: "pointer",
+              fontSize: "0.75rem",
+            }}
+          >
+            Retry camera
+          </button>
         </div>
       )}
 
@@ -291,8 +306,10 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
             <button
               className="btn-primary flex-1 rounded-xl py-3 text-sm font-semibold"
               onClick={handleStartStop}
+              disabled={previewing}
+              style={{ opacity: previewing ? 0.6 : 1, cursor: previewing ? "not-allowed" : "pointer" }}
             >
-              {done ? "Restart Set" : isRunning ? "Pause" : "Start Workout"}
+              {previewing ? "Watching demo..." : done ? "Restart Set" : isRunning ? "Pause" : "Start Workout"}
             </button>
 
             {plan.exercises.length > 1 && (
@@ -305,6 +322,16 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
             )}
           </div>
 
+          {/* Preview reminder */}
+          {previewing && (
+            <div className="glass-panel p-3 mb-3 text-center">
+              <p className="text-sm font-semibold text-white">Exercise demonstration</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Watch the figure move first, then tap Start Workout when the button appears.
+              </p>
+            </div>
+          )}
+
           {/* Exercise switcher dots */}
           {plan.exercises.length > 1 && (
             <div className="flex gap-1.5 justify-center mt-3">
@@ -315,7 +342,7 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
                     setExerciseIndex(i);
                     setReps(0);
                     setIsRunning(false);
-                    prevRepCycleT.current = 0;
+                    rendererRef.current?.resetReps();
                   }}
                   className="rounded-full transition-all"
                   style={{

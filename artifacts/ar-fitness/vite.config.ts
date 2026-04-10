@@ -4,9 +4,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// Default to sensible local values when running outside the Replit artifact runtime.
-// In Replit, PORT and BASE_PATH are injected by the platform and should always be set.
-const rawPort = process.env.PORT ?? "5173";
+// Default to a fixed local dev port for this app.
+// Using a stable port avoids the app jumping to a different number when previous servers are still running.
+const rawPort = process.env.PORT ?? "5175";
 const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
@@ -49,6 +49,7 @@ export default defineConfig({
   server: {
     port,
     host: "0.0.0.0",
+    https: false,
     allowedHosts: true,
     fs: {
       strict: true,
@@ -58,6 +59,7 @@ export default defineConfig({
   preview: {
     port,
     host: "0.0.0.0",
+    https: false,
     allowedHosts: true,
   },
 });
