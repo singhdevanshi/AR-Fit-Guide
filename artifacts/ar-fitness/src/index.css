@@ -77,6 +77,8 @@
   }
 }
 
+@keyframes floatUpAndFade { 0% { opacity: 0; transform: translate(-50%, -30%); } 20% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -80%); } }
+
 /* AR canvas fills behind all UI */
 #ar-canvas-container {
   position: fixed;

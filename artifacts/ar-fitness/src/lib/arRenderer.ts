@@ -192,16 +192,25 @@ export class ARRenderer {
     this.liveCenterY = (leftHip.y + rightHip.y) / 2;
   }
 
-  private _landmarkToJoint(index: number) {
+private _landmarkToJoint(index: number) {
     const landmark = this.liveLandmarks?.[index];
     if (!landmark) return [0, 0, 0] as [number, number, number];
 
-    const x = (landmark.x - this.liveCenterX) * this.liveScale;
-    return [
-      this.mirrorPose ? -x : x,
-      (this.liveCenterY - landmark.y) * this.liveScale * 1.3,
-      landmark.z * 2.0 * this.liveScale,
-    ] as [number, number, number];
+    // Calculate exact screen boundaries based on camera FOV and aspect ratio
+    const aspect = window.innerWidth / window.innerHeight;
+    const fovRad = THREE.MathUtils.degToRad(55);
+    const viewHeight = 2 * 4 * Math.tan(fovRad / 2); // Camera is at Z=4
+    const viewWidth = viewHeight * aspect;
+
+    // Map MediaPipe (0 to 1) directly to Three.js world space
+    // We invert X (0.5 - x) because the webcam video is automatically mirrored
+    const x = (0.5 - landmark.x) * viewWidth;
+    
+    // Camera looks at Y=1.4, map Y from top to bottom
+    const y = 1.4 + ((0.5 - landmark.y) * viewHeight);
+
+    // Force Z to 0 so the lines stay flat and large against the screen
+    return [x, y, 0] as [number, number, number];
   }
 
   private _vectorFromJoint(joint: [number, number, number]) {
@@ -290,7 +299,55 @@ export class ARRenderer {
     );
   }
 
-  private _computeLiveAngle(pose: FitnessPose) {
+  private _get2DAngle(aIdx: number, bIdx: number, cIdx: number) {
+    if (!this.liveLandmarks) return 0;
+    const a = this.liveLandmarks[aIdx];
+    const b = this.liveLandmarks[bIdx];
+    const c = this.liveLandmarks[cIdx];
+    if (!a || !b || !c) return 0;
+
+    const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+    let degrees = Math.abs(radians * 180.0 / Math.PI);
+    if (degrees > 180.0) degrees = 360.0 - degrees;
+    
+    return Math.round(degrees);
+  }
+
+private _computeLiveAngle(pose: FitnessPose) {
+    // 1. Bypass 3D projection entirely for mathematically perfect tracking
+    if (this.liveTracking && this.liveLandmarks) {
+      // Hardcoded MediaPipe indices for flawless stability
+      const lElbow = this._get2DAngle(11, 13, 15);
+      const rElbow = this._get2DAngle(12, 14, 16);
+      const lShoulder = this._get2DAngle(23, 11, 13);
+      const rShoulder = this._get2DAngle(24, 12, 14);
+      const lKnee = this._get2DAngle(23, 25, 27);
+      const rKnee = this._get2DAngle(24, 26, 28);
+
+      switch (this.currentExercise) {
+        case "bicep_curls":
+        case "tricep_extensions":
+        case "push_ups":
+          return Math.min(lElbow, rElbow);
+        case "arm_raises":
+        case "front_raises":
+        case "overhead_press":
+        case "shoulder_circles":
+          return Math.round((lShoulder + rShoulder) / 2);
+        case "squats":
+          return Math.round((lKnee + rKnee) / 2);
+        case "lunges":
+        case "hip_flexor":
+          return Math.min(lKnee, rKnee); 
+        case "chest_squeeze":
+          return this._get2DAngle(11, 0, 12); // Left shoulder, nose, right shoulder
+        default:
+          const joints = GUIDE_JOINTS[this.currentExercise];
+          return joints ? this._angleAt(pose[joints[0]], pose[joints[1]], pose[joints[2]]) : 0;
+      }
+    }
+
+    // 2. Fallback to standard logic if in Demo mode
     const leftElbow = this._exerciseElbowAngle(pose, "left");
     const rightElbow = this._exerciseElbowAngle(pose, "right");
     const leftShoulder = this._exerciseShoulderAngle(pose, "left");
@@ -299,31 +356,23 @@ export class ARRenderer {
     const rightKnee = this._exerciseKneeAngle(pose, "right");
 
     switch (this.currentExercise) {
-      case "bicep_curls":
-      case "tricep_extensions":
-      case "push_ups":
+      case "bicep_curls": case "tricep_extensions": case "push_ups":
         return Math.min(leftElbow, rightElbow);
-      case "arm_raises":
-      case "front_raises":
-      case "overhead_press":
-        return Math.round((leftShoulder + rightShoulder) / 2);
-      case "shoulder_circles":
+      case "arm_raises": case "front_raises": case "overhead_press": case "shoulder_circles":
         return Math.round((leftShoulder + rightShoulder) / 2);
       case "squats":
         return Math.round((leftKnee + rightKnee) / 2);
-      case "lunges": {
+      case "lunges":
         const leftDiff = Math.abs(leftKnee - 180);
         const rightDiff = Math.abs(rightKnee - 180);
         return leftDiff > rightDiff ? leftKnee : rightKnee;
-      }
       case "hip_flexor":
         return rightKnee;
       case "chest_squeeze":
         return this._angleAt(pose.leftShoulder, pose.neck, pose.rightShoulder);
-      default: {
+      default:
         const joints = GUIDE_JOINTS[this.currentExercise];
         return joints ? this._angleAt(pose[joints[0]], pose[joints[1]], pose[joints[2]]) : 0;
-      }
     }
   }
 
@@ -625,10 +674,11 @@ export class ARRenderer {
 
   // ── Build stick figure (spheres for joints, cylinders for bones) ───────
 
-  private _buildFigure() {
-    const jointGeo = new THREE.SphereGeometry(0.04, 10, 10);
+private _buildFigure() {
+    // 1. INCREASED SIZES: spheres from 0.04 to 0.08, head from 0.09 to 0.15
+    const jointGeo = new THREE.SphereGeometry(0.08, 10, 10);
     const jointMat = new THREE.MeshPhongMaterial({ color: 0x22ee88 });
-    const headGeo = new THREE.SphereGeometry(0.09, 14, 14);
+    const headGeo = new THREE.SphereGeometry(0.15, 14, 14);
     const headMat = new THREE.MeshPhongMaterial({ color: 0xeeeeff });
 
     for (const name of ALL_JOINTS) {
@@ -639,9 +689,10 @@ export class ARRenderer {
       this.jointMeshes.set(name, mesh);
     }
 
+    // 2. INCREASED SIZES: cylinders from 0.018 to 0.045 for thick "bone" lines
     const boneMat = new THREE.MeshPhongMaterial({ color: 0x44ffaa });
     for (const [a, b] of BONE_PAIRS) {
-      const geo = new THREE.CylinderGeometry(0.018, 0.018, 1, 8);
+      const geo = new THREE.CylinderGeometry(0.045, 0.045, 1, 8);
       const mesh = new THREE.Mesh(geo, boneMat.clone());
       mesh.visible = false;
       this.markerRoot.add(mesh);
@@ -673,17 +724,19 @@ export class ARRenderer {
 
   // ── Apply a Pose to the figure ─────────────────────────────────────────
 
-  private _applyPose(pose: FitnessPose, postureOk: boolean) {
+private _applyPose(pose: FitnessPose, postureOk: boolean) {
     // Update joint sphere positions
     for (const name of ALL_JOINTS) {
       const mesh = this.jointMeshes.get(name);
       if (!mesh) continue;
+      
       const [x, y, z] = pose[name];
-      mesh.position.set(x, y, z);
+      // Push slightly forward in Z-space so it renders over the camera feed
+      mesh.position.set(x, y, 0.1); 
       mesh.visible = true;
     }
 
-    // Position + orient each bone cylinder between two joints
+    // Position + orient each thick bone cylinder
     for (const [a, b] of BONE_PAIRS) {
       const boneMesh = this.boneMeshes.get(`${a}→${b}`);
       if (!boneMesh) continue;
@@ -693,15 +746,15 @@ export class ARRenderer {
       const mid = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
       const len = pA.distanceTo(pB);
 
+      mid.z = 0.1; // Keep it layered in front
       boneMesh.position.copy(mid);
       boneMesh.scale.set(1, len, 1);
 
-      // Orient the cylinder along the bone direction
       const dir = new THREE.Vector3().subVectors(pB, pA).normalize();
       const up = new THREE.Vector3(0, 1, 0);
       boneMesh.quaternion.setFromUnitVectors(up, dir);
 
-      // Green = good posture, red = bad posture
+      // AR Feedback: Make the thick limbs glow Green (Good) or Red (Bad)
       (boneMesh.material as THREE_TYPES.MeshPhongMaterial).color.setHex(
         postureOk ? 0x44ffaa : 0xff4455
       );
@@ -711,25 +764,12 @@ export class ARRenderer {
 
   // ── Update colored guide lines ─────────────────────────────────────────
 
-  private _updateGuideLines(pose: FitnessPose, postureOk: boolean) {
-    const triple = GUIDE_JOINTS[this.currentExercise];
-    if (!triple || this.guideLines.length < 2) return;
-
-    const [jA, jB, jC] = triple;
-    const pA = new THREE.Vector3(...pose[jA]);
-    const pB = new THREE.Vector3(...pose[jB]);
-    const pC = new THREE.Vector3(...pose[jC]);
-
-    const setLine = (line: THREE_TYPES.Line, from: THREE_TYPES.Vector3, to: THREE_TYPES.Vector3, colorOk: number, colorBad: number) => {
-      const geo = line.geometry as THREE_TYPES.BufferGeometry;
-      geo.setFromPoints([from, to]);
-      (geo.attributes.position as THREE_TYPES.BufferAttribute).needsUpdate = true;
-      (line.material as THREE_TYPES.LineBasicMaterial).color.setHex(postureOk ? colorOk : colorBad);
-      line.visible = true;
-    };
-
-    setLine(this.guideLines[0], pA, pB, 0x00ffaa, 0xff5566);
-    setLine(this.guideLines[1], pB, pC, 0xffdd00, 0xff9900);
+private _updateGuideLines(pose: FitnessPose, postureOk: boolean) {
+    // Disable the old 1px thin WebGL lines entirely. 
+    // Our thick AR bone cylinders in _applyPose do the job way better now.
+    for (const line of this.guideLines) {
+      line.visible = false;
+    }
   }
 
   // ── Public API ────────────────────────────────────────────────────────
@@ -802,9 +842,19 @@ export class ARRenderer {
 
   // ── Cleanup ───────────────────────────────────────────────────────────
 
-  destroy() {
+destroy() {
     if (this.animFrameId !== null) cancelAnimationFrame(this.animFrameId);
     window.removeEventListener("resize", this._onResize);
+
+    // ADDED: Properly kill the WebAssembly MediaPipe instance to prevent crashes on reload
+    if (this.poseDetector) {
+      try {
+        this.poseDetector.close();
+      } catch (e) {
+        console.warn("Failed to close pose detector", e);
+      }
+      this.poseDetector = undefined;
+    }
 
     if (this.arSource?.domElement) {
       const video = this.arSource.domElement;

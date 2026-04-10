@@ -8,7 +8,7 @@
  *  - Navigation to start AR workout or go back to onboarding
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { UserProfile, ExercisePlan } from "@/lib/fitness";
 import { getExercisesForDay, isWorkoutDay } from "@/lib/fitness";
 
@@ -88,6 +88,7 @@ export function DashboardScreen({ profile, plan, onStartWorkout, onBack }: Dashb
   ).length;
   const workoutsLeft = workoutsThisMonth - workoutsDone;
 
+  const [showSettings, setShowSettings] = useState(false);
   return (
     <div style={{
       minHeight: "100dvh",
@@ -97,38 +98,51 @@ export function DashboardScreen({ profile, plan, onStartWorkout, onBack }: Dashb
       overflowY: "auto",
       WebkitOverflowScrolling: "touch",
     }}>
-      {/* ── Header ── */}
+{/* ── Header ── */}
       <div style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
-        background: "rgba(10,15,26,0.92)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        position: "sticky", top: 0, zIndex: 20,
+        background: "rgba(10,15,26,0.92)", backdropFilter: "blur(12px)",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
-        padding: "14px 20px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
+        padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            borderRadius: 8,
-            color: "#94a3b8",
-            padding: "6px 10px",
-            cursor: "pointer",
-            fontSize: 16,
-            lineHeight: 1,
-          }}
-        >←</button>
-        <div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#f0f4f8" }}>My Dashboard</div>
-          <div style={{ fontSize: 12, color: "#64748b" }}>{MONTH_NAMES[month]} {year}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button onClick={onBack} className="btn-secondary rounded-lg px-3 py-1 text-sm text-muted-foreground">← Back</button>
+          <div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: "#f0f4f8" }}>My Dashboard</div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>{MONTH_NAMES[month]} {year}</div>
+          </div>
         </div>
+        
+        {/* Fake Profile/Settings Button */}
+        <button 
+          onClick={() => setShowSettings(!showSettings)}
+          style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+            border: "2px solid #ffffff33", display: "flex", alignItems: "center", justifyContent: "center"
+          }}
+        >
+          ⚙️
+        </button>
       </div>
+
+      {/* Fake Settings Modal */}
+      {showSettings && (
+        <div style={{
+          position: "absolute", top: 70, right: 20, width: 220, zIndex: 50,
+          background: "#0f172a", border: "1px solid #334155", borderRadius: 12, padding: 16,
+          boxShadow: "0 10px 25px rgba(0,0,0,0.5)"
+        }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: "#fff", marginBottom: 12 }}>Account Settings</h3>
+          <div style={{ fontSize: 12, color: "#94a3b8", display: "flex", flexDirection: "column", gap: 10 }}>
+            <button className="text-left hover:text-white transition-colors">👤 Edit Profile</button>
+            <button className="text-left hover:text-white transition-colors">🔔 Notifications</button>
+            <button className="text-left hover:text-white transition-colors">🔒 Privacy</button>
+            <hr style={{ borderColor: "#334155", margin: "4px 0" }} />
+            <button className="text-left text-red-400 hover:text-red-300">Sign Out</button>
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: "16px 16px 32px" }}>
 

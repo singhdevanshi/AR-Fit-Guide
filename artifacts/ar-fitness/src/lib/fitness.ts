@@ -9,7 +9,11 @@ export type FitnessGoal = "weight_loss" | "strength" | "flexibility";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 
 export interface UserProfile {
+  name: string;
   age: number;
+  height: number; // in cm
+  weight: number; // in kg
+  bmi: number;
   goal: FitnessGoal;
   level: ExperienceLevel;
 }

@@ -33,6 +33,8 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
   const [arStatus, setArStatus] = useState<"loading" | "ready" | "demo">("loading");
   const [retryKey, setRetryKey] = useState(0);
   const [previewing, setPreviewing] = useState(true);
+  const [streak, setStreak] = useState(0);
+  const [showRepAnim, setShowRepAnim] = useState(false);
 
   const currentExercise = plan.exercises[exerciseIndex];
   const targetReps = currentExercise.targetReps;
@@ -93,6 +95,7 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
   }, [isRunning]);
 
   // ── Live pose tracker polling ─────────────────────────────────────────
+// ── Live pose tracker polling & Gamification ─────────────────────────
   useEffect(() => {
     if (!isRunning || done) {
       if (repTimerRef.current) clearInterval(repTimerRef.current);
@@ -104,9 +107,28 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
       if (!renderer) return;
 
       const currentReps = renderer.getRepCount();
-      setReps(Math.min(currentReps, targetReps));
-      setCurrentAngle(renderer.getCurrentAngle());
-      setPostureOk(renderer.getCurrentPostureOk());
+      const currentAngle = renderer.getCurrentAngle();
+      const currentPosture = renderer.getCurrentPostureOk();
+
+      // Check if a new rep was just completed
+      setReps((prev) => {
+        if (currentReps > prev && prev < targetReps) {
+          // If posture is good during completion, increase streak!
+          if (currentPosture) {
+            setStreak((s) => s + 1);
+          } else {
+            setStreak(0); // Break streak if form was bad
+          }
+          
+          // Trigger floating text animation
+          setShowRepAnim(true);
+          setTimeout(() => setShowRepAnim(false), 1000);
+        }
+        return Math.min(currentReps, targetReps);
+      });
+
+      setCurrentAngle(currentAngle);
+      setPostureOk(currentPosture);
     }, 80);
 
     return () => {
@@ -256,6 +278,32 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
                 <span className="text-white font-bold text-sm leading-none">{reps}</span>
                 <span className="text-muted-foreground text-xs leading-none">/{targetReps}</span>
               </div>
+              {/* Streak Badge */}
+              {streak >= 3 && (
+                <div style={{
+                  position: "absolute", bottom: -12, left: "50%", transform: "translateX(-50%)",
+                  background: "rgba(249, 115, 22, 0.2)", border: "1px solid #f97316",
+                  color: "#fdba74", fontSize: "0.6rem", fontWeight: "bold",
+                  padding: "2px 6px", borderRadius: "12px", whiteSpace: "nowrap",
+                  animation: "bounce 1s infinite"
+                }}>
+                  🔥 {streak}x STREAK
+                </div>
+              )}
+
+              {/* Floating "PERFECT" Text */}
+              {showRepAnim && (
+                <div style={{
+                  position: "fixed", top: "40%", left: "50%", transform: "translate(-50%, -50%)",
+                  zIndex: 100, pointerEvents: "none",
+                  color: streak > 1 ? "#4ade80" : "#fff",
+                  textShadow: streak > 1 ? "0 0 20px rgba(74, 222, 128, 0.8)" : "0 0 10px rgba(255,255,255,0.5)",
+                  fontSize: "3rem", fontWeight: 900, fontStyle: "italic", letterSpacing: "2px",
+                  animation: "floatUpAndFade 1s forwards"
+                }}>
+                  {streak > 1 ? "PERFECT!" : "NICE!"}
+                </div>
+              )}
             </div>
           </div>
         </div>
