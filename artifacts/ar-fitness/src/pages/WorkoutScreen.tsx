@@ -49,7 +49,8 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
         if (!canvasRef.current) return;
         try {
           rendererRef.current = new ARRenderer(canvasRef.current);
-          setArStatus("ready");
+          // Poll for actual mode after AR init resolves (async camera permission)
+          scheduleStatusCheck();
         } catch {
           setArStatus("demo");
         }
@@ -59,7 +60,8 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
 
     try {
       rendererRef.current = new ARRenderer(canvasRef.current);
-      setArStatus("ready");
+      // AR.js init is asynchronous — poll to determine if camera opened or fell back to demo
+      scheduleStatusCheck();
     } catch (err) {
       console.warn("AR init failed:", err);
       setArStatus("demo");
@@ -69,6 +71,18 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
       rendererRef.current?.destroy();
       rendererRef.current = null;
     };
+
+    function scheduleStatusCheck() {
+      // Give AR.js up to 3 seconds to open the camera before reporting status
+      const t = setTimeout(() => {
+        const renderer = rendererRef.current;
+        if (!renderer) return;
+        setArStatus(renderer.isDemoMode() ? "demo" : "ready");
+      }, 3000);
+      // Also set "loading" in the meantime
+      setArStatus("loading");
+      return t;
+    }
   }, []);
 
   // ── Sync exercise to renderer when it changes ──────────────────────────

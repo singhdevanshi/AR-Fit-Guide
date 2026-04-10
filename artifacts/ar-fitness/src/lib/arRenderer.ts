@@ -390,6 +390,11 @@ export class ARRenderer {
     return this._repCycleT;
   }
 
+  /** Returns true when running in demo/fallback mode (camera unavailable) */
+  isDemoMode() {
+    return this.isDemo;
+  }
+
   // ── Resize handler ────────────────────────────────────────────────────
 
   private _onResize = () => {
