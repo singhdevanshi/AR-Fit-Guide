@@ -54,7 +54,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "squats",
     name: "Squats",
     description: "Stand with feet shoulder-width apart. Lower your hips until thighs are parallel to the floor, then push back up.",
-    targetReps: 12,
+    targetReps: 5,
     repDurationMs: 2500,
     muscleGroup: "Legs & Glutes",
     postureGuide: {
@@ -67,7 +67,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "arm_raises",
     name: "Lateral Arm Raises",
     description: "Stand tall, arms at sides. Raise both arms out to shoulder height, hold 1 second, then lower slowly.",
-    targetReps: 15,
+    targetReps: 5,
     repDurationMs: 2000,
     muscleGroup: "Shoulders",
     postureGuide: {
@@ -80,7 +80,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "lunges",
     name: "Reverse Lunges",
     description: "Stand upright. Step one foot back and lower your rear knee toward the floor, then return to start.",
-    targetReps: 10,
+    targetReps: 5,
     repDurationMs: 3000,
     muscleGroup: "Legs & Core",
     postureGuide: {
@@ -93,7 +93,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "push_ups",
     name: "Push-Ups",
     description: "Start in a plank position. Lower chest to the floor while keeping your body straight, then push back up.",
-    targetReps: 10,
+    targetReps: 5,
     repDurationMs: 2800,
     muscleGroup: "Chest & Triceps",
     postureGuide: {
@@ -106,7 +106,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "hip_flexor",
     name: "Hip Flexor Stretch",
     description: "Kneel on one knee, other foot forward. Gently push hips forward until you feel a stretch in the front of your hip.",
-    targetReps: 8,
+    targetReps: 5,
     repDurationMs: 4000,
     muscleGroup: "Hip Flexors",
     postureGuide: {
@@ -119,7 +119,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "shoulder_circles",
     name: "Shoulder Circles",
     description: "Stand tall and rotate both shoulders in large, slow circles — forward 10 times, then backward 10 times.",
-    targetReps: 20,
+    targetReps: 5,
     repDurationMs: 1500,
     muscleGroup: "Shoulder Mobility",
     postureGuide: {
@@ -132,7 +132,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "bicep_curls",
     name: "Bicep Curls",
     description: "Stand tall, arms at sides, palms facing forward. Curl both forearms up toward your shoulders, squeezing the biceps, then lower slowly.",
-    targetReps: 15,
+    targetReps: 5,
     repDurationMs: 2200,
     muscleGroup: "Biceps",
     postureGuide: {
@@ -145,7 +145,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "tricep_extensions",
     name: "Overhead Tricep Extensions",
     description: "Stand tall, clasp hands and raise both arms overhead. Slowly lower your forearms behind your head, then extend back up.",
-    targetReps: 12,
+    targetReps: 5,
     repDurationMs: 2500,
     muscleGroup: "Triceps",
     postureGuide: {
@@ -158,7 +158,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "front_raises",
     name: "Front Raises",
     description: "Stand tall, arms hanging in front. Raise both arms straight forward to shoulder height, hold briefly, then lower with control.",
-    targetReps: 15,
+    targetReps: 5,
     repDurationMs: 2000,
     muscleGroup: "Front Deltoids",
     postureGuide: {
@@ -171,7 +171,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "overhead_press",
     name: "Overhead Press",
     description: "Start with arms at shoulder height, elbows bent. Press both arms fully overhead until elbows are locked out, then lower back down.",
-    targetReps: 12,
+    targetReps: 5,
     repDurationMs: 2300,
     muscleGroup: "Shoulders & Triceps",
     postureGuide: {
@@ -184,7 +184,7 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
     id: "chest_squeeze",
     name: "Chest Squeeze",
     description: "Stand tall, arms outstretched to the sides at chest height. Sweep both arms together in front of your chest, squeezing hard, then open wide.",
-    targetReps: 15,
+    targetReps: 5,
     repDurationMs: 2000,
     muscleGroup: "Chest & Shoulders",
     postureGuide: {

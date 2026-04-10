@@ -138,13 +138,12 @@ export function WorkoutScreen({ plan, onBack, onCompleteWorkout }: WorkoutScreen
       if (repTimerRef.current) clearInterval(repTimerRef.current);
     };
   }, [isRunning, done, targetReps]);
-
-  // ── Rest Timer Logic ──────────────────────────────────────────────────
+  // Tell the renderer to force the 3D demo animation when previewing
   useEffect(() => {
-    if (done && restTimeLeft === null) {
-      setRestTimeLeft(30); // Start 30s rest when target reps are hit
+    if (rendererRef.current) {
+      rendererRef.current.setPreviewMode(previewing);
     }
-  }, [done, restTimeLeft]);
+  }, [previewing]);
 
   // ── Handlers ──────────────────────────────────────────────────────────
 
@@ -197,9 +196,9 @@ export function WorkoutScreen({ plan, onBack, onCompleteWorkout }: WorkoutScreen
   const postureLabel = postureOk ? "Good form" : "Adjust form";
   const postureClass = postureOk ? "posture-good" : "posture-warn";
 
-  // ── Rep ring progress ─────────────────────────────────────────────────
+// ── Rep ring progress ─────────────────────────────────────────────────
   const progress = Math.min(reps / targetReps, 1);
-  const circum = 2 * Math.PI * 38;
+  const circum = 2 * Math.PI * 26; // Fixed radius from 38 to 26!
   const strokeDash = circum * (1 - progress);
 
   return (

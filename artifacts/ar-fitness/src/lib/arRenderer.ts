@@ -134,6 +134,7 @@ export class ARRenderer {
   private _repCycleT = 0;
 
   private isDemo = false;
+  private previewMode = false;
   private liveTracking = false;
   private shouldCountReps = false;
   private repConfirmedDown = false;
@@ -393,15 +394,21 @@ private _computeLiveAngle(pose: FitnessPose) {
     }
   }
 
-  private _updateRepCounting(angle: number) {
+private _updateRepCounting(angle: number) {
     if (!this.shouldCountReps) return;
 
     const now = Date.now();
     const { low, high } = this._getAngleRange(this.currentExercise);
     const range = Math.max(1, high - low);
-    const downThreshold = low + Math.max(12, range * 0.18);
-    const upThreshold = low + Math.min(range * 0.7, Math.max(28, range * 0.55));
-    const minRepGapMs = 900;
+    
+    // STRICT THRESHOLDS: 
+    // You must hit the bottom 25% of the movement to go "down"
+    // You must hit the top 25% of the movement to go "up"
+    const downThreshold = low + (range * 0.25);
+    const upThreshold = high - (range * 0.25);
+    
+    // Increase the cooldown timer to 1.2 seconds so jitter can't rapid-fire reps
+    const minRepGapMs = 1200; 
 
     if (this.repMotionState === "unknown") {
       this.repMotionState = angle <= downThreshold ? "below" : "above";
@@ -409,6 +416,7 @@ private _computeLiveAngle(pose: FitnessPose) {
     }
 
     if (this.repMotionState === "below") {
+      // Must fully extend AND pass the time limit
       if (angle >= upThreshold && now - this.lastRepTimestamp >= minRepGapMs) {
         this.repCount += 1;
         this.repMotionState = "above";
@@ -416,6 +424,7 @@ private _computeLiveAngle(pose: FitnessPose) {
         this.lastRepTimestamp = now;
       }
     } else if (this.repMotionState === "above") {
+      // Must fully compress to reset for the next rep
       if (angle <= downThreshold) {
         this.repMotionState = "below";
         this.repMovementAngle = angle;
@@ -646,8 +655,9 @@ private _computeLiveAngle(pose: FitnessPose) {
     return Math.round(this.angleHistory.reduce((sum, a) => sum + a, 0) / this.angleHistory.length);
   }
 
-  private _tick(deltaMs: number) {
-    if (this._isLivePoseAvailable()) {
+private _tick(deltaMs: number) {
+    // If we have live tracking AND we are not forcing a preview demo
+    if (this._isLivePoseAvailable() && !this.previewMode) {
       const pose = this._getLivePose()!;
       const rawAngle = this._computeLiveAngle(pose);
       const angleValue = this._smoothAngle(rawAngle);
@@ -656,11 +666,11 @@ private _computeLiveAngle(pose: FitnessPose) {
       this.currentPostureOk = postureOk;
       this._updateRepCounting(angleValue);
       this._applyPose(pose, postureOk);
-      this._updateGuideLines(pose, postureOk);
       window.__ARFitnessFrameData = { angleValue, postureOk };
       return;
     }
 
+    // Otherwise, play the perfect-form 3D animation (Demo/Preview mode)
     this._repCycleT = (this._repCycleT + deltaMs / this.repDurationMs) % 1;
     const { pose, angleValue, postureOk } = getPoseAtTime(this.currentExercise, this._repCycleT);
     this.currentAngle = angleValue;
@@ -668,7 +678,6 @@ private _computeLiveAngle(pose: FitnessPose) {
     this._updateRepCounting(angleValue);
 
     this._applyPose(pose, postureOk);
-    this._updateGuideLines(pose, postureOk);
     window.__ARFitnessFrameData = { angleValue, postureOk };
   }
 
@@ -793,6 +802,11 @@ private _updateGuideLines(pose: FitnessPose, postureOk: boolean) {
     if (!running) {
       this.repConfirmedDown = false;
     }
+  }
+
+  /** Force the 3D animation to play instead of live tracking */
+  setPreviewMode(active: boolean) {
+    this.previewMode = active;
   }
 
   /** Reset live rep counting state. */

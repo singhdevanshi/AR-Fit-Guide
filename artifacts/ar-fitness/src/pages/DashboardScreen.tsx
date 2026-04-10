@@ -357,126 +357,66 @@ export function DashboardScreen({ profile, plan, completedToday, onStartWorkout,
           </div>
 
           {/* Weekday headers */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: 3,
-            marginBottom: 4,
-          }}>
-            {WEEKDAY_LABELS.map((d) => (
-              <div key={d} style={{
-                textAlign: "center",
-                fontSize: 10,
-                fontWeight: 600,
-                color: "#475569",
-                textTransform: "uppercase",
-                letterSpacing: "0.04em",
-                paddingBottom: 6,
-              }}>
-                {d}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar cells */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: 3,
-          }}>
-            {calendarData.map((cell, idx) => {
-              if (!cell.day) {
-                return <div key={idx} />;
-              }
-
-              const isPast = cell.day < today.getDate() && !cell.isToday;
-              const isCompletedToday = cell.isToday && completedToday;
-
-              return (
-                <div
-                  key={idx}
-                  title={cell.isWorkout ? cell.exercises.join(" + ") : "Rest day"}
-                  style={{
-                    aspectRatio: "1",
-                    borderRadius: 8,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    position: "relative",
-                    background: cell.isToday
-                      ? "linear-gradient(135deg, #22c55e, #16a34a)"
-                      : cell.isWorkout
-                        ? isPast
-                          ? "rgba(34,197,94,0.12)"
-                          : "rgba(34,197,94,0.18)"
-                        : "rgba(255,255,255,0.03)",
-                    border: cell.isToday
-                      ? "2px solid #22c55e"
-                      : cell.isWorkout
-                        ? `1px solid ${isPast ? "rgba(34,197,94,0.25)" : "rgba(34,197,94,0.4)"}`
-                        : "1px solid rgba(255,255,255,0.05)",
-                    cursor: cell.isWorkout ? "pointer" : "default",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <span style={{
-                    fontSize: 12,
-                    fontWeight: cell.isToday ? 800 : cell.isWorkout ? 600 : 400,
-                    color: cell.isToday
-                      ? "#fff"
-                      : cell.isWorkout
-                        ? isPast ? "#4ade80" : "#86efac"
-                        : "#334155",
-                    lineHeight: 1,
-                  }}>
-                    {cell.day}
-                  </span>
-                  {/* Workout indicator dot */}
-                  {cell.isWorkout && !cell.isToday && (
-                    <div style={{
-                      width: 4,
-                      height: 4,
-                      borderRadius: "50%",
-                      background: isPast ? "#4ade8066" : "#4ade80",
-                      marginTop: 3,
-                    }} />
-                  )}
-{/* Past workout checkmark */}
-                  {cell.isWorkout && (isPast || isCompletedToday) && (
-                    <div style={{
-                      position: "absolute", top: 2, right: 3, fontSize: 10, color: "#4ade80", fontWeight: "bold"
-                    }}>✓</div>
-                  )}
+<div style={{ maxWidth: 320, margin: "0 auto" }}>
+            {/* Weekday headers */}
+            <div style={{
+              display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3, marginBottom: 4,
+            }}>
+              {WEEKDAY_LABELS.map((d) => (
+                <div key={d} style={{ textAlign: "center", fontSize: 10, fontWeight: 600, color: "#475569", textTransform: "uppercase", paddingBottom: 6 }}>
+                  {d}
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          {/* Legend */}
-          <div style={{
-            display: "flex",
-            gap: 16,
-            marginTop: 14,
-            flexWrap: "wrap",
-          }}>
-            {[
-              { color: "#22c55e", label: "Today" },
-              { color: "rgba(34,197,94,0.4)", label: "Workout day" },
-              { color: "rgba(255,255,255,0.05)", label: "Rest day" },
-            ].map((item) => (
-              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 3,
-                  background: item.color,
-                  border: `1px solid ${item.color}`,
-                  flexShrink: 0,
-                }} />
-                <span style={{ fontSize: 11, color: "#64748b" }}>{item.label}</span>
-              </div>
-            ))}
+            {/* Calendar cells */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 3 }}>
+              {calendarData.map((cell, idx) => {
+                if (!cell.day) return <div key={idx} />;
+
+                const isPast = cell.day < today.getDate() && !cell.isToday;
+                const isCompletedToday = cell.isToday && completedToday;
+
+                return (
+                  <div
+                    key={idx}
+                    title={cell.isWorkout ? cell.exercises.join(" + ") : "Rest day"}
+                    style={{
+                      aspectRatio: "1", borderRadius: 8, display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center", position: "relative",
+                      background: cell.isToday
+                        ? "linear-gradient(135deg, #22c55e, #16a34a)"
+                        : cell.isWorkout
+                          ? isPast ? "rgba(34,197,94,0.12)" : "rgba(34,197,94,0.18)"
+                          : "rgba(255,255,255,0.03)",
+                      border: cell.isToday
+                        ? "2px solid #22c55e"
+                        : cell.isWorkout
+                          ? `1px solid ${isPast ? "rgba(34,197,94,0.25)" : "rgba(34,197,94,0.4)"}`
+                          : "1px solid rgba(255,255,255,0.05)",
+                      cursor: cell.isWorkout ? "pointer" : "default",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span style={{
+                      fontSize: 12, fontWeight: cell.isToday ? 800 : cell.isWorkout ? 600 : 400,
+                      color: cell.isToday ? "#fff" : cell.isWorkout ? isPast ? "#4ade80" : "#86efac" : "#334155",
+                      lineHeight: 1,
+                    }}>
+                      {cell.day}
+                    </span>
+                    {/* Workout indicator dot */}
+                    {cell.isWorkout && !cell.isToday && (
+                      <div style={{ width: 4, height: 4, borderRadius: "50%", background: isPast ? "#4ade8066" : "#4ade80", marginTop: 3 }} />
+                    )}
+                    {/* Past workout checkmark */}
+                    {cell.isWorkout && (isPast || isCompletedToday) && (
+                      <div style={{ position: "absolute", top: 2, right: 3, fontSize: 10, color: cell.isToday ? "#fff" : "#4ade80", fontWeight: "bold" }}>✓</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
