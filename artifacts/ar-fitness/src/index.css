@@ -90,7 +90,7 @@
   height: 100% !important;
 }
 
-/* Overlay sits above the canvas */
+/* Overlay sits above the canvas (z-index 1) and the AR video (z-index 0) */
 .ar-overlay {
   position: fixed;
   inset: 0;

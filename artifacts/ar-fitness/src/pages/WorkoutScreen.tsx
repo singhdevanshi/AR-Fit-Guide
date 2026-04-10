@@ -157,7 +157,14 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
 
   return (
     <>
-      {/* ── Three.js canvas (full screen behind everything) ── */}
+      {/*
+        ── Three.js canvas (full screen behind everything) ──
+        In AR mode the canvas background must be transparent so the AR.js
+        camera video element (injected into <body> with z-index: -1) is
+        visible through the canvas. Only in demo/fallback mode (no camera)
+        do we set an opaque dark background. The arRenderer itself controls
+        setClearColor — we set the CSS background to match.
+      */}
       <canvas
         ref={canvasRef}
         id="ar-canvas"
@@ -166,8 +173,8 @@ export function WorkoutScreen({ plan, onBack }: WorkoutScreenProps) {
           inset: 0,
           width: "100%",
           height: "100%",
-          zIndex: 0,
-          background: "#0a0f1a",
+          zIndex: 1,
+          background: arStatus === "demo" ? "#0a0f1a" : "transparent",
         }}
       />
 
