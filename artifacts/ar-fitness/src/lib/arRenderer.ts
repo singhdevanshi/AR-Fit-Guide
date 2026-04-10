@@ -87,12 +87,17 @@ const BONE_PAIRS: [JointName, JointName][] = [
 
 // ── Guide joints (three joints that form the angle to highlight) ──────────
 const GUIDE_JOINTS: Record<ExerciseId, [JointName, JointName, JointName]> = {
-  squats:          ["hip",          "leftKnee",     "leftFoot"],
-  arm_raises:      ["neck",         "leftShoulder", "leftElbow"],
-  lunges:          ["hip",          "rightKnee",    "rightFoot"],
-  push_ups:        ["leftShoulder", "leftElbow",    "leftHand"],
-  hip_flexor:      ["hip",          "rightKnee",    "rightFoot"],
-  shoulder_circles:["neck",         "leftShoulder", "leftElbow"],
+  squats:            ["hip",           "leftKnee",      "leftFoot"],
+  arm_raises:        ["neck",          "leftShoulder",  "leftElbow"],
+  lunges:            ["hip",           "rightKnee",     "rightFoot"],
+  push_ups:          ["leftShoulder",  "leftElbow",     "leftHand"],
+  hip_flexor:        ["hip",           "rightKnee",     "rightFoot"],
+  shoulder_circles:  ["neck",          "leftShoulder",  "leftElbow"],
+  bicep_curls:       ["leftShoulder",  "leftElbow",     "leftHand"],
+  tricep_extensions: ["leftShoulder",  "leftElbow",     "leftHand"],
+  front_raises:      ["neck",          "leftShoulder",  "leftElbow"],
+  overhead_press:    ["leftShoulder",  "leftElbow",     "leftHand"],
+  chest_squeeze:     ["leftShoulder",  "neck",          "rightShoulder"],
 };
 
 const ALL_JOINTS: JointName[] = [

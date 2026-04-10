@@ -16,7 +16,18 @@ export interface UserProfile {
 
 // ----- Exercise definitions -----
 
-export type ExerciseId = "squats" | "arm_raises" | "lunges" | "push_ups" | "hip_flexor" | "shoulder_circles";
+export type ExerciseId =
+  | "squats"
+  | "arm_raises"
+  | "lunges"
+  | "push_ups"
+  | "hip_flexor"
+  | "shoulder_circles"
+  | "bicep_curls"
+  | "tricep_extensions"
+  | "front_raises"
+  | "overhead_press"
+  | "chest_squeeze";
 
 export interface PostureGuide {
   jointLabel: string;  // e.g. "Knee angle"
@@ -113,6 +124,71 @@ export const EXERCISES: Record<ExerciseId, Exercise> = {
       tip: "Make the circles as large as comfortable. Roll fully through the range of motion.",
     },
   },
+  bicep_curls: {
+    id: "bicep_curls",
+    name: "Bicep Curls",
+    description: "Stand tall, arms at sides, palms facing forward. Curl both forearms up toward your shoulders, squeezing the biceps, then lower slowly.",
+    targetReps: 15,
+    repDurationMs: 2200,
+    muscleGroup: "Biceps",
+    postureGuide: {
+      jointLabel: "Elbow angle",
+      targetAngle: 45,
+      tip: "Keep elbows pinned at your sides — only your forearms should move. Squeeze at the top.",
+    },
+  },
+  tricep_extensions: {
+    id: "tricep_extensions",
+    name: "Overhead Tricep Extensions",
+    description: "Stand tall, clasp hands and raise both arms overhead. Slowly lower your forearms behind your head, then extend back up.",
+    targetReps: 12,
+    repDurationMs: 2500,
+    muscleGroup: "Triceps",
+    postureGuide: {
+      jointLabel: "Elbow angle",
+      targetAngle: 90,
+      tip: "Keep upper arms stationary and close to your ears. Don't flare the elbows out.",
+    },
+  },
+  front_raises: {
+    id: "front_raises",
+    name: "Front Raises",
+    description: "Stand tall, arms hanging in front. Raise both arms straight forward to shoulder height, hold briefly, then lower with control.",
+    targetReps: 15,
+    repDurationMs: 2000,
+    muscleGroup: "Front Deltoids",
+    postureGuide: {
+      jointLabel: "Shoulder angle",
+      targetAngle: 90,
+      tip: "Raise arms to shoulder height only. Keep a slight bend at the elbows and avoid swinging.",
+    },
+  },
+  overhead_press: {
+    id: "overhead_press",
+    name: "Overhead Press",
+    description: "Start with arms at shoulder height, elbows bent. Press both arms fully overhead until elbows are locked out, then lower back down.",
+    targetReps: 12,
+    repDurationMs: 2300,
+    muscleGroup: "Shoulders & Triceps",
+    postureGuide: {
+      jointLabel: "Arm extension",
+      targetAngle: 170,
+      tip: "Lock out overhead fully. Keep your core braced — don't arch your lower back.",
+    },
+  },
+  chest_squeeze: {
+    id: "chest_squeeze",
+    name: "Chest Squeeze",
+    description: "Stand tall, arms outstretched to the sides at chest height. Sweep both arms together in front of your chest, squeezing hard, then open wide.",
+    targetReps: 15,
+    repDurationMs: 2000,
+    muscleGroup: "Chest & Shoulders",
+    postureGuide: {
+      jointLabel: "Arm spread",
+      targetAngle: 60,
+      tip: "Imagine hugging a barrel. Squeeze the chest at the peak and maintain a slight bend at the elbow.",
+    },
+  },
 };
 
 // ----- Plan builder -----
@@ -130,42 +206,42 @@ export function buildExercisePlan(profile: UserProfile): ExercisePlan {
   // Rule-based selection: goal × level matrix
   if (goal === "weight_loss") {
     if (level === "beginner") {
-      exerciseIds = ["squats", "arm_raises"];
-      recommendation = "Great starting combo! Squats burn calories while building lower body strength, and lateral arm raises target your shoulders. Focus on form over speed.";
+      exerciseIds = ["bicep_curls", "arm_raises"];
+      recommendation = "Great start! Bicep curls and lateral raises work your arms while keeping things low-impact. Focus on controlled movement over speed.";
     } else if (level === "intermediate") {
-      exerciseIds = ["lunges", "squats"];
-      recommendation = "These compound movements maximize calorie burn. Maintain control through each rep for best results.";
+      exerciseIds = ["front_raises", "squats"];
+      recommendation = "This combo targets shoulders and legs for a calorie-burning full-body effect. Maintain good form throughout each set.";
     } else {
-      exerciseIds = ["lunges", "push_ups"];
-      recommendation = "Intense compound work for maximum fat burn. Keep rest periods short between sets.";
+      exerciseIds = ["overhead_press", "lunges"];
+      recommendation = "Intense full-body work for maximum fat burn. Keep rest periods short and drive through every rep.";
     }
   } else if (goal === "strength") {
     if (level === "beginner") {
-      exerciseIds = ["squats", "push_ups"];
-      recommendation = "The classic strength foundation. Master squat and push-up form before adding load. Quality first!";
+      exerciseIds = ["bicep_curls", "overhead_press"];
+      recommendation = "Classic arm strength starters. Master the curl and press form before adding load — quality builds results!";
     } else if (level === "intermediate") {
-      exerciseIds = ["push_ups", "lunges"];
-      recommendation = "Push your upper and lower body with these strength builders. Go slow on the descent for maximum muscle engagement.";
+      exerciseIds = ["tricep_extensions", "bicep_curls"];
+      recommendation = "Superset your biceps and triceps for maximum arm strength gains. Go slow on the eccentric (lowering) phase.";
     } else {
-      exerciseIds = ["push_ups", "squats"];
-      recommendation = "Advanced strength combo. Try tempo reps (3 seconds down, 1 second up) to increase difficulty without equipment.";
+      exerciseIds = ["overhead_press", "push_ups"];
+      recommendation = "Advanced upper-body combo. Try slow negatives (3 sec down, 1 sec up) to maximize tension without equipment.";
     }
   } else {
     // flexibility
     if (level === "beginner") {
       exerciseIds = ["hip_flexor", "shoulder_circles"];
-      recommendation = "Perfect flexibility starters! These open up the two most commonly tight areas. Move slowly and breathe deeply.";
+      recommendation = "Perfect flexibility starters! These open the two most commonly tight areas. Move slowly and breathe deeply.";
     } else if (level === "intermediate") {
-      exerciseIds = ["hip_flexor", "arm_raises"];
-      recommendation = "Great for improving overall mobility. Hold each stretch position for 2-3 seconds at peak range.";
+      exerciseIds = ["chest_squeeze", "arm_raises"];
+      recommendation = "Great for shoulder and chest mobility. Hold each end-range position for 2–3 seconds to build lasting flexibility.";
     } else {
-      exerciseIds = ["shoulder_circles", "hip_flexor"];
-      recommendation = "Focus on maximizing your range of motion. Each circle should feel like you're drawing the largest possible arc.";
+      exerciseIds = ["shoulder_circles", "chest_squeeze"];
+      recommendation = "Focus on maximizing your range of motion. Each movement should feel like you're reaching the edge of your comfortable range.";
     }
   }
 
   // Age adjustment: suggest lower impact for age 60+
-  if (age >= 60 && !["hip_flexor", "shoulder_circles", "arm_raises"].includes(exerciseIds[0])) {
+  if (age >= 60 && !["hip_flexor", "shoulder_circles", "arm_raises", "bicep_curls", "front_raises", "chest_squeeze"].includes(exerciseIds[0])) {
     recommendation += " Take your time between reps — slow, controlled movement is safer and just as effective.";
   }
 
@@ -173,6 +249,39 @@ export function buildExercisePlan(profile: UserProfile): ExercisePlan {
     exercises: exerciseIds.map((id) => EXERCISES[id]),
     recommendation,
   };
+}
+
+// ----- Weekly schedule builder -----
+
+// The pool of exercises recommended for each goal
+export const GOAL_EXERCISE_POOL: Record<FitnessGoal, ExerciseId[]> = {
+  weight_loss: ["squats", "lunges", "arm_raises", "front_raises", "bicep_curls", "chest_squeeze", "overhead_press"],
+  strength:    ["push_ups", "squats", "bicep_curls", "tricep_extensions", "overhead_press", "lunges", "chest_squeeze"],
+  flexibility: ["hip_flexor", "shoulder_circles", "arm_raises", "front_raises", "chest_squeeze", "bicep_curls"],
+};
+
+// Days of week (0=Sun…6=Sat) on which workouts are scheduled per goal
+export const GOAL_WORKOUT_DAYS: Record<FitnessGoal, number[]> = {
+  weight_loss: [1, 2, 3, 4, 5],      // Mon–Fri (5 days)
+  strength:    [1, 3, 5],            // Mon, Wed, Fri (3 days)
+  flexibility: [0, 1, 2, 3, 4, 5, 6], // Every day
+};
+
+/**
+ * Return 2 exercise IDs for a given day-of-month within the schedule,
+ * cycling through the exercise pool.
+ */
+export function getExercisesForDay(goal: FitnessGoal, dayOfMonth: number): Exercise[] {
+  const pool = GOAL_EXERCISE_POOL[goal];
+  const idx = (dayOfMonth - 1) % Math.floor(pool.length / 2);
+  return [EXERCISES[pool[idx * 2 % pool.length]], EXERCISES[pool[(idx * 2 + 1) % pool.length]]];
+}
+
+/**
+ * Returns true if the given day-of-week is a workout day for the goal.
+ */
+export function isWorkoutDay(goal: FitnessGoal, dayOfWeek: number): boolean {
+  return GOAL_WORKOUT_DAYS[goal].includes(dayOfWeek);
 }
 
 // ----- Animation frame data for stick figure -----
@@ -237,7 +346,7 @@ const SQUAT_DEEP: Pose = {
   rightFoot:     [ 0.3, 0.0, 0],
 };
 
-// Arms-raised pose
+// Arms-raised pose (lateral raise)
 const ARM_RAISE_UP: Pose = {
   ...STAND,
   leftElbow:  [-0.55, 1.7, 0],
@@ -317,6 +426,78 @@ const SHOULDER_UP: Pose = {
   rightHand:  [ 0.5,  2.3, 0],
 };
 
+// Bicep curl — top (arms curled up toward shoulders)
+const BICEP_CURL_TOP: Pose = {
+  ...STAND,
+  leftElbow:  [-0.35, 1.55, 0.1],
+  rightElbow: [ 0.35, 1.55, 0.1],
+  leftHand:   [-0.3,  1.82, 0.18],
+  rightHand:  [ 0.3,  1.82, 0.18],
+};
+
+// Tricep extension — top (arms extended straight overhead)
+const TRICEP_TOP: Pose = {
+  ...STAND,
+  leftElbow:  [-0.22, 2.15, 0],
+  rightElbow: [ 0.22, 2.15, 0],
+  leftHand:   [-0.18, 2.45, 0],
+  rightHand:  [ 0.18, 2.45, 0],
+};
+
+// Tricep extension — bottom (forearms behind head)
+const TRICEP_BOTTOM: Pose = {
+  ...STAND,
+  leftElbow:  [-0.22, 2.1, 0],
+  rightElbow: [ 0.22, 2.1, 0],
+  leftHand:   [-0.15, 1.62, -0.12],
+  rightHand:  [ 0.15, 1.62, -0.12],
+};
+
+// Front raises — arms raised forward to shoulder height
+const FRONT_RAISE_UP: Pose = {
+  ...STAND,
+  leftElbow:  [-0.32, 1.7, 0.28],
+  rightElbow: [ 0.32, 1.7, 0.28],
+  leftHand:   [-0.3,  1.72, 0.52],
+  rightHand:  [ 0.3,  1.72, 0.52],
+};
+
+// Overhead press — start (hands at shoulder level, elbows bent)
+const OVERHEAD_PRESS_START: Pose = {
+  ...STAND,
+  leftElbow:  [-0.42, 1.7, 0],
+  rightElbow: [ 0.42, 1.7, 0],
+  leftHand:   [-0.38, 1.92, 0],
+  rightHand:  [ 0.38, 1.92, 0],
+};
+
+// Overhead press — top (arms fully extended overhead)
+const OVERHEAD_PRESS_TOP: Pose = {
+  ...STAND,
+  leftElbow:  [-0.28, 2.12, 0],
+  rightElbow: [ 0.28, 2.12, 0],
+  leftHand:   [-0.22, 2.42, 0],
+  rightHand:  [ 0.22, 2.42, 0],
+};
+
+// Chest squeeze — open (arms spread wide at chest height)
+const CHEST_OPEN: Pose = {
+  ...STAND,
+  leftElbow:  [-0.72, 1.62, 0],
+  rightElbow: [ 0.72, 1.62, 0],
+  leftHand:   [-0.92, 1.55, 0],
+  rightHand:  [ 0.92, 1.55, 0],
+};
+
+// Chest squeeze — closed (arms pulled in front of chest)
+const CHEST_CLOSED: Pose = {
+  ...STAND,
+  leftElbow:  [-0.2,  1.62, 0.32],
+  rightElbow: [ 0.2,  1.62, 0.32],
+  leftHand:   [-0.08, 1.55, 0.45],
+  rightHand:  [ 0.08, 1.55, 0.45],
+};
+
 function lerpPose(a: Pose, b: Pose, t: number): Pose {
   const result: Partial<Pose> = {};
   for (const key of Object.keys(a) as JointName[]) {
@@ -336,16 +517,15 @@ export function getPoseAtTime(exerciseId: ExerciseId, t: number): { pose: Pose; 
    */
   switch (exerciseId) {
     case "squats": {
-      // 0→0.5: stand → squat, 0.5→1: squat → stand
       const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
       const pose = lerpPose(STAND, SQUAT_DEEP, phase);
-      const angle = Math.round(180 - 90 * phase); // 180° standing → 90° at bottom
+      const angle = Math.round(180 - 90 * phase);
       return { pose, angleValue: angle, postureOk: angle >= 85 && angle <= 175 };
     }
     case "arm_raises": {
       const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
       const pose = lerpPose(STAND, ARM_RAISE_UP, phase);
-      const angle = Math.round(180 * phase); // 0° at side → 90° raised
+      const angle = Math.round(180 * phase);
       return { pose, angleValue: angle, postureOk: angle >= 75 && angle <= 95 };
     }
     case "lunges": {
@@ -361,7 +541,7 @@ export function getPoseAtTime(exerciseId: ExerciseId, t: number): { pose: Pose; 
       return { pose, angleValue: angle, postureOk: angle >= 80 && angle <= 100 };
     }
     case "hip_flexor": {
-      const phase = Math.sin(t * Math.PI); // ease in out
+      const phase = Math.sin(t * Math.PI);
       const pose = lerpPose(STAND, HIP_STRETCH, phase);
       const angle = Math.round(180 - 70 * phase);
       return { pose, angleValue: angle, postureOk: angle >= 100 && angle <= 130 };
@@ -371,6 +551,39 @@ export function getPoseAtTime(exerciseId: ExerciseId, t: number): { pose: Pose; 
       const pose = lerpPose(STAND, SHOULDER_UP, phase);
       const angle = Math.round(360 * t);
       return { pose, angleValue: angle % 360, postureOk: true };
+    }
+    case "bicep_curls": {
+      // 0→0.5: arms down → curled up, 0.5→1: curled → back down
+      const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
+      const pose = lerpPose(STAND, BICEP_CURL_TOP, phase);
+      const angle = Math.round(180 - 135 * phase); // 180° extended → ~45° curled
+      return { pose, angleValue: angle, postureOk: angle >= 30 && angle <= 60 };
+    }
+    case "tricep_extensions": {
+      // 0→0.5: top → bottom (lower behind head), 0.5→1: bottom → top
+      const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
+      const pose = lerpPose(TRICEP_TOP, TRICEP_BOTTOM, phase);
+      const angle = Math.round(170 - 80 * phase); // 170° extended → 90° bent
+      return { pose, angleValue: angle, postureOk: angle >= 80 && angle <= 105 };
+    }
+    case "front_raises": {
+      const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
+      const pose = lerpPose(STAND, FRONT_RAISE_UP, phase);
+      const angle = Math.round(90 * phase); // 0° at side → 90° in front
+      return { pose, angleValue: angle, postureOk: angle >= 80 && angle <= 100 };
+    }
+    case "overhead_press": {
+      const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
+      const pose = lerpPose(OVERHEAD_PRESS_START, OVERHEAD_PRESS_TOP, phase);
+      const angle = Math.round(90 + 80 * phase); // 90° start → 170° lockout
+      return { pose, angleValue: angle, postureOk: angle >= 155 && angle <= 175 };
+    }
+    case "chest_squeeze": {
+      // 0→0.5: open → squeeze, 0.5→1: squeeze → open
+      const phase = t < 0.5 ? t * 2 : (1 - t) * 2;
+      const pose = lerpPose(CHEST_OPEN, CHEST_CLOSED, phase);
+      const angle = Math.round(180 - 120 * phase); // 180° open → 60° squeezed
+      return { pose, angleValue: angle, postureOk: angle >= 50 && angle <= 75 };
     }
   }
 }
